@@ -1,9 +1,7 @@
 import dataclasses
 from argparse import ArgumentParser
 from operator import attrgetter
-from typing import (
-    List,
-)
+from typing import List
 
 
 @dataclasses.dataclass

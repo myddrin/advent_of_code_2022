@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from compute import (
+from .compute import (
     Elf,
     q1_max_carrying_elf,
     q2_top_carrying_elves,
