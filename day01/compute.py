@@ -1,7 +1,10 @@
 import dataclasses
 from argparse import ArgumentParser
 from operator import attrgetter
-from typing import List
+from typing import (
+    List,
+    Self,
+)
 
 
 @dataclasses.dataclass
@@ -17,7 +20,7 @@ class Elf:
         self.storage.append(value)
 
     @classmethod
-    def load_elves(cls, filename: str) -> List:
+    def load_elves(cls, filename: str) -> List[Self]:
         print(f'Loading {filename}')
         elves = []
         current_elf = Elf(f'elf_{len(elves)}')
