@@ -89,17 +89,17 @@ class TestAction:
 
 class TestQuestion1:
     def test_example(self, small_ex_game_q1):
-        assert Action.play(small_ex_game_q1) == 15
+        assert Action.play(small_ex_game_q1) == (15, 15)
 
     def test_input(self, input_txt):
         input_game = Action.from_file(input_txt)
-        assert Action.play(input_game) == 15691
+        assert Action.play(input_game) == (15691, 8832)
 
 
 class TestQuestion2:
     def test_example(self, small_ex_game_q2):
-        assert Action.play(small_ex_game_q2) == 12
+        assert Action.play(small_ex_game_q2) == (12, 15)
 
     def test_input(self, input_txt):
         input_game = Action.from_file(input_txt, q1=False)
-        assert Action.play(input_game) == 12989
+        assert Action.play(input_game) == (12989, 11295)

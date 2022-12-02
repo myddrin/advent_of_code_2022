@@ -131,10 +131,21 @@ pluggy = ">=0.12,<2.0"
 [package.extras]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
+[[package]]
+name = "pytest-random-order"
+version = "1.0.4"
+description = "Randomise the order in which pytest tests are run with some control over the randomness"
+category = "dev"
+optional = false
+python-versions = ">=3.5.0"
+
+[package.dependencies]
+pytest = ">=3.0.0"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.12"
-content-hash = "567107fc3a221100df42d75e35bc9ed0fc36f54cec338834754537a65aea702d"
+content-hash = "501b3cfd7884ae2c1a66b0caa838667b7b74e1f0b82704d38cfa6534c0d00077"
 
 [metadata.files]
 attrs = []
@@ -152,3 +163,4 @@ pycodestyle = []
 pyflakes = []
 pyparsing = []
 pytest = []
+pytest-random-order = []

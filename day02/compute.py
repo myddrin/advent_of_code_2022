@@ -93,11 +93,13 @@ class Action(IntEnum):
         return game
 
     @classmethod
-    def play(cls, game: Game) -> int:
+    def play(cls, game: Game) -> Tuple[int, int]:
         score = 0
+        other_score = 0
         for opponent, selected in game:
             score += selected.round(opponent)
-        return score
+            other_score += opponent.round(selected)
+        return score, other_score
 
     @property
     def output(self) -> str:
@@ -149,9 +151,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     q1_game = Action.from_file(args.input)
-    q1_score = Action.play(q1_game)
-    print(f'q1: score is {q1_score}')
+    q1_score, q1_opponent = Action.play(q1_game)
+    print(f'q1: score is {q1_score} (opponent: {q1_opponent})')
 
     q2_game = Action.from_file(args.input, q1=False)
-    q2_score = Action.play(q2_game)
-    print(f'q2: score is {q2_score}')
+    q2_score, q2_opponent = Action.play(q2_game)
+    print(f'q2: score is {q2_score} (opponent: {q2_opponent})')
