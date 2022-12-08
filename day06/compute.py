@@ -7,7 +7,6 @@ from typing import (
     Tuple,
 )
 
-
 PacketInfo = Tuple[int, Optional[str]]
 
 
