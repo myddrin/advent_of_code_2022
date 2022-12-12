@@ -1,4 +1,7 @@
-.PHONY: tests
+.PHONY: tests quick-tests
+
+quick-tests:
+	pytest -k 'not slow'
 
 tests:
 	pytest
