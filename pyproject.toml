@@ -2,7 +2,7 @@
 name = "advent_of_code_2022"
 version = "0.1.0"
 description = "Answers for https://adventofcode.com/2022/"
-authors = ["Your Name <you@example.com>"]
+authors = ["Thomas Richard"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
