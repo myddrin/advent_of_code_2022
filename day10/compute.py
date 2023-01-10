@@ -1,7 +1,9 @@
 import dataclasses
+import enum
 from argparse import ArgumentParser
 from enum import Enum
 from typing import (
+    ClassVar,
     List,
     Optional,
     Self,
@@ -48,16 +50,31 @@ class Instruction:
                 program.append(cls.from_str(content))
         return program
 
+class Pixel(enum.Enum):
+    Black = '.'
+    Lit = '#'
+
 
 @dataclasses.dataclass
 class Display:
+    SCREEN_WIDTH: ClassVar[int] = 40
+    SCREEN_HEIGHT: ClassVar[int] = 6
+
     signal_strength: List[int] = dataclasses.field(default_factory=list)
     display_register = 1
 
+    @staticmethod
+    def black_screen_factory(width, height):
+        def _f():
+            return [Pixel.Black] * (width * height)
+        return _f
+
+    screen_state: List[Pixel] = dataclasses.field(default_factory=black_screen_factory(SCREEN_WIDTH, SCREEN_HEIGHT))
+
     @classmethod
-    def from_program(cls, program: List[Instruction]) -> Self:
+    def state_from_program(cls, program: List[Instruction]) -> Self:
         interesting_states = [20, 60, 100, 140, 180, 220]
-        n_instruction = 1
+        current_cycle = 1
         stat = cls()
 
         for instruction in program:
@@ -66,14 +83,68 @@ class Display:
             if instruction.action == Action.Addx:
                 stat.display_register += instruction.value
 
-            n_instruction += instruction.duration
-            if interesting_states and n_instruction > interesting_states[0]:
+            current_cycle += instruction.duration
+            if interesting_states and current_cycle > interesting_states[0]:
+                # Using prev_reg as the register changes at the end of the cycle
                 stat.signal_strength.append(
                     interesting_states[0] * prev_reg,
                 )
                 interesting_states.pop(0)
 
         return stat
+
+    @classmethod
+    def render_from_program(cls, program: List[Instruction]) -> Self:
+        stat = cls()
+
+        current_cycle = 0
+        for i, instruction in enumerate(program):
+            if instruction.action == Action.Addx:
+                # duration of Addx is 2, we do only 1 draw
+                for cycle in range(instruction.duration - 1):
+                    stat.render_sprite(current_cycle + cycle)
+
+                stat.display_register += instruction.value
+                # state change at END of cycle
+                stat.signal_strength.append(stat.display_register)
+
+            current_cycle += instruction.duration
+            stat.render_sprite(current_cycle)
+            stat.signal_strength.append(stat.display_register)
+
+            if len(stat.signal_strength) > (cls.SCREEN_WIDTH * cls.SCREEN_HEIGHT):
+                print(f'stop at {i=}')
+                break
+
+        return stat
+
+    def render_sprite(self, cycle: int):
+        drawing_index = cycle % self.SCREEN_WIDTH
+        sprite_location_start = self.display_register - 1
+        sprite_location_end = self.display_register + 1
+        if sprite_location_start <= drawing_index <= sprite_location_end:
+            self.screen_state[cycle] = Pixel.Lit
+
+    def interesting_states(self) -> List[int]:
+        interesting_states = [20, 60, 100, 140, 180, 220]
+        return [
+            self.signal_strength[i + 1] * i
+            for i in interesting_states
+        ]
+
+    def display_str(self) -> List[str]:
+        result = []
+        for row in range(self.SCREEN_HEIGHT):
+            line = [
+                self.screen_state[row * self.SCREEN_WIDTH + col].value
+                for col in range(self.SCREEN_WIDTH)
+            ]
+            result.append(''.join(line))
+        return result
+
+    def print_state(self):
+        for line in self.display_str():
+            print(line)
 
 
 if __name__ == '__main__':
@@ -83,5 +154,5 @@ if __name__ == '__main__':
 
     program_data = Instruction.from_file(args.input)
 
-    display_stats = Display.from_program(program_data)
+    display_stats = Display.state_from_program(program_data)
     print(f'Q1: signal strength is {sum(display_stats.signal_strength)}')
