@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from enum import Enum
 from typing import (
     ClassVar,
+    Iterable,
     List,
     Optional,
     Self,
@@ -50,6 +51,7 @@ class Instruction:
                 program.append(cls.from_str(content))
         return program
 
+
 class Pixel(enum.Enum):
     Black = '.'
     Lit = '#'
@@ -59,9 +61,7 @@ class Pixel(enum.Enum):
 class Display:
     SCREEN_WIDTH: ClassVar[int] = 40
     SCREEN_HEIGHT: ClassVar[int] = 6
-
-    signal_strength: List[int] = dataclasses.field(default_factory=list)
-    display_register = 1
+    INTERESTING_STATES: ClassVar[Iterable[int]] = (20, 60, 100, 140, 180, 220)
 
     @staticmethod
     def black_screen_factory(width, height):
@@ -69,13 +69,19 @@ class Display:
             return [Pixel.Black] * (width * height)
         return _f
 
+    signal_strength: List[int] = dataclasses.field(default_factory=list)
     screen_state: List[Pixel] = dataclasses.field(default_factory=black_screen_factory(SCREEN_WIDTH, SCREEN_HEIGHT))
+    display_register = 1
 
     @classmethod
-    def state_from_program(cls, program: List[Instruction]) -> Self:
-        interesting_states = [20, 60, 100, 140, 180, 220]
+    def signal_strength_from_program(cls, program: List[Instruction]) -> Self:
+        """
+        `stats.signal_strength` will contain the signal value at the `interesting_states`
+        `stats.screen_state` will not be populated
+        """
         current_cycle = 1
         stat = cls()
+        interesting_states = list(cls.INTERESTING_STATES)  # copy
 
         for instruction in program:
             prev_reg = stat.display_register
@@ -94,23 +100,27 @@ class Display:
         return stat
 
     @classmethod
-    def render_from_program(cls, program: List[Instruction]) -> Self:
+    def screen_state_from_program(cls, program: List[Instruction]) -> Self:
+        """
+        `stats.signal_strength` will not be populated
+        `stats.screen_state` will be populated
+        """
         stat = cls()
 
         current_cycle = 0
         for i, instruction in enumerate(program):
-            if instruction.action == Action.Addx:
-                # duration of Addx is 2, we do only 1 draw
-                for cycle in range(instruction.duration - 1):
-                    stat.render_sprite(current_cycle + cycle)
+            for cycle in range(instruction.duration):
+                stat.render_sprite(current_cycle + cycle)
 
+            if instruction.action == Action.Addx:
+                # duration of Addx is 2
                 stat.display_register += instruction.value
-                # state change at END of cycle
-                stat.signal_strength.append(stat.display_register)
+            elif instruction.action == Action.Noop:
+                stat.render_sprite(current_cycle)
+            else:
+                raise RuntimeError(f'Unexpected op: {instruction.action}')
 
             current_cycle += instruction.duration
-            stat.render_sprite(current_cycle)
-            stat.signal_strength.append(stat.display_register)
 
             if len(stat.signal_strength) > (cls.SCREEN_WIDTH * cls.SCREEN_HEIGHT):
                 print(f'stop at {i=}')
@@ -119,18 +129,20 @@ class Display:
         return stat
 
     def render_sprite(self, cycle: int):
+        # cycle is starting at 1
         drawing_index = cycle % self.SCREEN_WIDTH
+        # the sprite is 3 pixels wide, the center being the display_register
         sprite_location_start = self.display_register - 1
         sprite_location_end = self.display_register + 1
         if sprite_location_start <= drawing_index <= sprite_location_end:
             self.screen_state[cycle] = Pixel.Lit
 
-    def interesting_states(self) -> List[int]:
-        interesting_states = [20, 60, 100, 140, 180, 220]
-        return [
-            self.signal_strength[i + 1] * i
-            for i in interesting_states
-        ]
+    def interesting_states(self) -> Optional[List[int]]:
+        if self.signal_strength:
+            return [
+                self.signal_strength[i + 1] * i
+                for i in self.INTERESTING_STATES
+            ]
 
     def display_str(self) -> List[str]:
         result = []
@@ -154,5 +166,10 @@ if __name__ == '__main__':
 
     program_data = Instruction.from_file(args.input)
 
-    display_stats = Display.state_from_program(program_data)
+    display_stats = Display.signal_strength_from_program(program_data)
     print(f'Q1: signal strength is {sum(display_stats.signal_strength)}')
+
+    screen_rows = Display.screen_state_from_program(program_data).display_str()
+    for line in screen_rows:
+        # '.' makes it hard to read
+        print(line.replace(Pixel.Black.value, ' '))

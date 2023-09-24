@@ -81,7 +81,7 @@ class TestDisplay:
     #     ]
 
     def test_state_small_ex_txt(self, small_ex_program):
-        stat = Display.state_from_program(small_ex_program)
+        stat = Display.signal_strength_from_program(small_ex_program)
 
         assert stat.signal_strength == [
             420,
@@ -91,20 +91,37 @@ class TestDisplay:
             2880,
             3960,
         ]
+        factory = Display.black_screen_factory(Display.SCREEN_WIDTH, Display.SCREEN_HEIGHT)
+        assert stat.screen_state == factory()
 
     def test_render_small_ex(self, small_ex_program):
-        stat = Display.render_from_program(small_ex_program)
+        stat = Display.screen_state_from_program(small_ex_program)
 
-        assert stat.interesting_states() == [
-            420,
-            1140,
-            1800,
-            2940,
-            2880,
-            3960,
+        assert stat.interesting_states() is None
+        display_str = stat.display_str()
+        assert len(display_str)
+        assert stat.display_str() == [
+            '##..##..##..##..##..##..##..##..##..##..',
+            '###...###...###...###...###...###...###.',
+            '####....####....####....####....####....',
+            '#####.....#####.....#####.....#####.....',
+            '######......######......######......####',
+            '#######.......#######.......#######.....',
         ]
 
     def test_q1(self, input_txt):
         program_data = Instruction.from_file(input_txt)
-        display_stats = Display.state_from_program(program_data)
+        display_stats = Display.signal_strength_from_program(program_data)
         assert sum(display_stats.signal_strength) == 13480
+
+    def test_q2(self, input_txt):
+        program_data = Instruction.from_file(input_txt)
+        display_stats = Display.signal_strength_from_program(program_data)
+        assert display_stats.display_str() == [
+            '####..##....##.###...##...##..####.#..#.',
+            '#....#..#....#.#..#.#..#.#..#.#....#.#..',
+            '###..#.......#.###..#....#....###..##...',
+            '#....#.##....#.#..#.#.##.#....#....#.#..',
+            '#....#..#.#..#.#..#.#..#.#..#.#....#.#..',
+            '####..###..##..###...###..##..#....#..#.',
+        ]  # EGJBGCFK
